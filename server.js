@@ -21,7 +21,7 @@ connectMongoDB();
 
 //Body parser middle ware
 app.use(express.json());
-app.use(express.urlencoded({extended : true}));
+app.use(express.urlencoded({ extended: true }));
 
 // Logger middleware
 app.use(logger);
@@ -31,11 +31,19 @@ app.use('/user', userRoutes);
 
 // Auth routes
 app.use('/auth', authRoutes);
+app.get('/health', (req, res) => {
+  try {
+    res.status(201).json({ message: 'ok' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+})
 
 // Error handler
 app.use(notFound);
 app.use(errorHandler);
 
-app.listen(PORT,'0.0.0.0', () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });

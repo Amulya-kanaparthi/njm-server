@@ -35,10 +35,10 @@ export const mobileLogin = async (req, res) => {
 
   try {
     // Check if user exists in MySQL
-    // const [existingUser] = await db.promise().query('SELECT * FROM users WHERE email = ?', [email]);
-    // if (existingUser.length > 0) {
-    //   return res.json({ message: 'Login successful', user: existingUser[0] });
-    // }
+    const [existingUser] = await db.promise().query('SELECT * FROM users WHERE email = ?', [email]);
+    if (existingUser.length > 0) {
+      return res.json({ message: 'Login successful', user: existingUser[0] });
+    }
 
     // Otherwise create new user
     await db.promise().query('INSERT INTO users (username, email,isVerified) VALUES (?, ?, ?)', [displayName, email, true]);
