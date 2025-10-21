@@ -15,7 +15,7 @@ export const registerUser = async (req, res) => {
   try {
     let { username, phoneNumber, email, password } = req.body;
 
-    // 1️⃣ Check if user already exists
+    //  Check if user already exists
     db.query('SELECT * FROM Users WHERE email = ? OR phoneNumber = ?', [email, phoneNumber], async (err, results) => {
       if (err) return res.status(500).json({ status: 0, message: 'Database error' });
 
@@ -40,7 +40,7 @@ export const registerUser = async (req, res) => {
           );
         }
       } else {
-        // 2️⃣ New user → insert into DB
+        //  New user → insert into DB
         let hashedPassword = await bcrypt.hash(password, 10);
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
