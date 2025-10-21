@@ -31,6 +31,14 @@ app.use('/user', userRoutes);
 
 // Auth routes
 app.use('/auth', authRoutes);
+app.get('/', (req, res) => {
+  try {
+    res.status(200).json({ message: 'Server is running' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+})
 app.get('/health', (req, res) => {
   try {
     res.status(201).json({ message: 'ok' });
