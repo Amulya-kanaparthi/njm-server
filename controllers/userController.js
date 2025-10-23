@@ -19,7 +19,7 @@ export const registerUser = async (req, res) => {
 
     // Check if user exists
     const existingUser = await User.findOne({
-      $or: [{ email }, { phoneNumber }],
+      $or: [{ email }],
     });
 
     if (existingUser) {

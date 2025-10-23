@@ -39,14 +39,6 @@ app.get('/', (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 })
-app.get('/health', (req, res) => {
-  try {
-    res.status(201).json({ message: 'ok' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server error' });
-  }
-})
 
 // Error handler
 app.use(notFound);
