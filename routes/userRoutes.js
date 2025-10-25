@@ -1,5 +1,5 @@
 import express from 'express';
-import { refreshToken, registerUser, verifyOtp } from '../controllers/userController.js';
+import { loginUser, logoutUser, registerUser, verifyOtp } from '../controllers/userController.js';
 import { authenticate } from '../middleware/authMiddleware.js';
 const router = express.Router();
 
@@ -8,7 +8,9 @@ router.post('/register', registerUser);
 
 router.post('/verify-otp',verifyOtp);
 
-router.post('/refresh-token',refreshToken);
+router.post('/login',loginUser);
+
+router.post('/logout',logoutUser);
 
 router.get('/profile',authenticate,(req,res)=>{
     res.json({status:1,message:`Welcome ${req.user.email}`});

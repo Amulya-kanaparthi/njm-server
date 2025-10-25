@@ -1,6 +1,6 @@
 // routes/authRoutes.js
 import express from 'express';
-import { googleAuth, googleCallback, logoutUser, mobileLogin, userProfile } from '../controllers/authController.js';
+import { googleAuth, googleCallback, logoutUser, mobileLogin, refreshAccessToken, userProfile } from '../controllers/authController.js';
 import passport from '../middleware/passportSetup.js';
 
 const router = express.Router();
@@ -26,5 +26,7 @@ router.get('/logout', logoutUser);
 // Mobile Login Route
 router.post('/google/mobile-login', mobileLogin);
 
+//refresh access token
+router.post('access_token/refresh',refreshAccessToken)
 
 export default router;

@@ -1,6 +1,7 @@
 // controllers/authController.js
 // controllers/authController.js
 
+import jwt from 'jsonwebtoken';
 import User from '../models/userModel.js'; // Mongoose User model
 
 // Middleware to trigger Google OAuth (Passport handles it)
@@ -79,5 +80,36 @@ export const mobileLogin = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+
+// Refresh Token
+
+export const refreshAccessToken = async (req, res) => {
+  try {
+    const refreshToken = req.headers.authorization?.split(' ')[1];
+    if (!refreshToken) return res.status(401).json({ message: 'No refresh token provided' });
+
+    // Verify token signature (ignore expiry)
+    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET);
+
+    // Check if refresh token matches DB
+    const user = await User.findById(decoded.id);
+    if (!user || user.refreshToken !== refreshToken) {
+      return res.status(403).json({ message: 'Invalid refresh token' });
+    }
+
+    // Generate new access token
+    const newAccessToken = jwt.sign(
+      { id: user.id, email: user.email },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: '60m' }
+    );
+
+    res.json({ status: 1, message: 'Access token generated successfully', accessToken: newAccessToken });
+  } catch (err) {
+    console.error('Error refreshing token:', err);
+    res.status(403).json({ message: 'Invalid refresh token' });
   }
 };
