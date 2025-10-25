@@ -31,7 +31,7 @@ app.use('/user', userRoutes);
 
 // Auth routes
 app.use('/auth', authRoutes);
-app.get('/', (req, res) => {
+app.get('/health', (req, res) => {
   try {
     res.status(200).json({ message: 'Server is running' });
   } catch (error) {
