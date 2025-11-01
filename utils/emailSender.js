@@ -52,3 +52,55 @@ export const sendOtpEmail = async (email, username, otp) => {
     throw new Error('Failed to send OTP email');
   }
 };
+
+
+/**
+ * Sends password reset email with hyperlink.
+ * @param {string} email - User email
+ * @param {string} username - User name
+ * @param {string} resetLink - URL with token
+ */
+export const sendResetPasswordEmail = async (email, username, resetLink) => {
+  try {
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: 'Password Reset Request',
+      html: `
+        <div style="font-family: Arial, sans-serif; padding: 20px; background-color: #f7f8fa;">
+          <div style="max-width: 500px; margin: auto; background: white; padding: 20px; border-radius: 10px;">
+            <h2 style="color: #333;">Hi ${username || 'User'},</h2>
+            <p style="color: #555;">
+              We received a request to reset your password.
+              Click the link below to authenticate and reset it:
+            </p>
+            <a href="${resetLink}" style="
+                display: inline-block;
+                color: #0066cc;
+                text-decoration: underline;
+                font-weight: bold;
+                margin: 15px 0;
+              ">Authenticate</a>
+            <p style="color: #777; font-size: 13px;">
+              This link will expire in 15 minutes.
+            </p>
+          </div>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`✅ Password reset email sent to ${email}`);
+  } catch (error) {
+    console.error('❌ Error sending reset email:', error);
+    throw new Error('Error sending reset email');
+  }
+};

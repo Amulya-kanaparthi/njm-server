@@ -9,7 +9,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/userModel.js'; // Mongoose User model
-import { sendOtpEmail } from '../utils/sendOtpEmail.js';
+import { sendOtpEmail, sendResetPasswordEmail } from '../utils/emailSender.js';
 import { generateAccessToken, generateRefreshToken } from '../utils/token.js';
 
 // Register a new user
@@ -174,7 +174,7 @@ export const loginUser = async (req, res) => {
 };
 
 
-// Logout User (custom access_token header)
+// Logout User 
 export const logoutUser = async (req, res) => {
   try {
     // Get token from 'access_token' header instead of 'Authorization'
@@ -210,6 +210,154 @@ export const logoutUser = async (req, res) => {
     });
   } catch (error) {
     console.error('Logout error:', error);
+    res.status(500).json({ status: 0, message: 'Server error' });
+  }
+};
+
+
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    // Check if user exists
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ status: 0, message: 'User not found' });
+    }
+
+    // Generate reset token (valid for 15 min)
+    const RESET_TOKEN_SECRET = process.env.RESET_TOKEN_SECRET || 'reset_secret_key';
+    const resetToken = jwt.sign({ userId: user._id }, RESET_TOKEN_SECRET, { expiresIn: '15m' });
+
+    // Save token temporarily in DB
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpiry = Date.now() + 15 * 60 * 1000;
+    await user.save();
+
+    // Send reset email (separate function)
+    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    const resetLink = `${clientUrl}/user/verify-reset/${resetToken}`;
+
+    await sendResetPasswordEmail(user.email, user.username, resetLink);
+
+    res.status(200).json({
+      status: 1,
+      message: 'Reset password email sent successfully',
+    });
+  } catch (error) {
+    console.error('Error in requestPasswordReset:', error);
+    res.status(500).json({ status: 0, message: 'Server error' });
+  }
+};
+
+
+
+// Verify reset link token 
+export const verifyResetToken = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const RESET_TOKEN_SECRET = process.env.RESET_TOKEN_SECRET || 'reset_secret_key';
+
+    const decoded = jwt.verify(token, RESET_TOKEN_SECRET);
+    const user = await User.findById(decoded.userId);
+
+    if (!user || user.resetPasswordToken !== token) {
+      return res.status(400).send(`
+        <h2 style="color:red;text-align:center;margin-top:50px;">
+          Invalid or expired link
+        </h2>
+      `);
+    }
+
+    if (Date.now() > user.resetPasswordExpiry) {
+      return res.status(400).send(`
+        <h2 style="color:red;text-align:center;margin-top:50px;">
+          Token expired
+        </h2>
+      `);
+    }
+
+    // ✅ Mark user as authenticated to reset
+    user.resetVerified = true;
+    await user.save();
+
+    // 🎨 Show a simple success page instead of JSON
+    res.send(`
+      <div style="font-family:Arial,sans-serif;text-align:center;margin-top:100px;">
+        <h2 style="color:green;">Authentication successful</h2>
+        <p>You may now return to the app to reset your password.</p>
+      </div>
+    `);
+  } catch (error) {
+    console.error('Error in verifyResetToken:', error);
+    res.status(400).send(`
+      <h2 style="color:red;text-align:center;margin-top:50px;">
+        Invalid or expired link 
+      </h2>
+    `);
+  }
+};
+
+
+
+
+
+// App polls this endpoint to check if user authenticated the reset link
+export const checkResetStatus = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(404).json({ status: 0, message: 'User not found' });
+    }
+
+    if (user.resetVerified) {
+      return res.status(200).json({
+        status: 1,
+        message: 'User authenticated for password reset',
+      });
+    } else {
+      return res.status(200).json({
+        status: 0,
+        message: 'User not authenticated yet',
+      });
+    }
+  } catch (error) {
+    console.error('Error in checkResetStatus:', error);
+    res.status(500).json({ status: 0, message: 'Server error' });
+  }
+};
+
+
+
+export const resetPassword = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ status: 0, message: 'User not found' });
+    }
+
+    if (!user.resetVerified) {
+      return res.status(403).json({ status: 0, message: 'User not authenticated for reset' });
+    }
+
+    // Hash new password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    user.password = hashedPassword;
+
+    // Clean up
+    user.resetPasswordToken = null;
+    user.resetPasswordExpiry = null;
+    user.resetVerified = false;
+
+    await user.save();
+
+    res.status(200).json({ status: 1, message: 'Password reset successfully' });
+  } catch (error) {
+    console.error('Error in resetPassword:', error);
     res.status(500).json({ status: 0, message: 'Server error' });
   }
 };

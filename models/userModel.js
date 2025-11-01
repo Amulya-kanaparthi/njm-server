@@ -9,6 +9,9 @@ const userSchema = new mongoose.Schema({
   otpExpiry: Date,
   isVerified: { type: Boolean, default: false },
   refreshToken: String,
+  resetPasswordToken: { type: String },
+  resetPasswordExpiry: { type: Date },
+  resetVerified: { type: Boolean, default: false },
 });
 
 const User = mongoose.model('User', userSchema);
