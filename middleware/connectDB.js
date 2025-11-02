@@ -1,15 +1,23 @@
-// middleware/connectDB.js
-import mongoose from 'mongoose';
+import dotenv from "dotenv";
+import mongoose from "mongoose";
 
-const mongoUri = process.env.MONGO_URI;
-/// MongoDB Connection
+dotenv.config();
 export const connectMongoDB = async () => {
-  mongoose.connect(mongoUri, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
-.then(() => console.log('MongoDB connected!'))
-.catch(err => console.error('MongoDB connection error:', err));
+  const mongoUrl = process.env.MONGO_URL;
+  console.log("🧩 MONGO_URL from env:", mongoUrl); // debug log
+
+  if (!mongoUrl) throw new Error("❌ MONGO_URL is missing in environment");
+
+  try {
+    await mongoose.connect(mongoUrl, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log("✅ MongoDB connected successfully!");
+  } catch (err) {
+    console.error("❌ MongoDB connection error:", err);
+    throw err;
+  }
 };
 
 

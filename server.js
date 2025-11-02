@@ -8,8 +8,8 @@ import logger from './middleware/logger.js';
 import notFound from './middleware/notFound.js';
 import { setupSession } from './middleware/passportSetup.js';
 import authRoutes from './routes/authRoutes.js';
+import bibleRoutes from './routes/bibleRoutes.js';
 import userRoutes from './routes/userRoutes.js';
-
 const PORT = process.env.PORT || 3000;
 const app = express();
 
@@ -31,6 +31,10 @@ app.use('/user', userRoutes);
 
 // Auth routes
 app.use('/auth', authRoutes);
+
+// Bible routes
+app.use('/bible', bibleRoutes);
+
 app.get('/health', (req, res) => {
   try {
     res.status(200).json({ message: 'Server is running' });
