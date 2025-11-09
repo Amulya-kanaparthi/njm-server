@@ -91,3 +91,43 @@ export const getVerses = async (req, res) => {
     });
   }
 };
+
+
+// get full bible
+
+export const getFullBible = async (req,res) => {
+  try {
+      const {language} = req.params;
+
+      if (!language){
+        return res.status(400).json({
+          status : 0,
+          message : "Language is required",
+        });
+      }
+
+      const bibleChapters = await Bible.find({language});
+
+      const bibleData = {};
+
+      bibleChapters.forEach((entry) => {
+        if(!bibleData[entry.book]){
+          bibleData[entry.book] = {};
+        }
+        bibleData[entry.book][entry.chapter] = entry.verses;
+      })
+
+      res.status(200).json({
+      status: 1,
+      message: "Bible fetched successfully",
+      data: bibleData,
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      status: 0,
+      message: "Error fetching full Bible",
+      error: error.message,
+    });
+  }
+};
